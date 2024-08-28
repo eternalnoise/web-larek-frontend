@@ -1,4 +1,4 @@
-import { IEvents } from "../events";
+import { IEvents } from "../base/events";
 
 class Page {
   constructor(container: HTMLElement, events: IEvents) {

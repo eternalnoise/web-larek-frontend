@@ -1,10 +1,13 @@
-abstract class BaseView<T> {
-  constructor(container: HTMLElement) {
-    this.container = container;
-  }
+import { ensureElement } from "../../utils/utils";
+
+export abstract class BaseView<T> {
+  protected constructor(protected container: HTMLElement) {}
   setElement(query: string, value: HTMLElement) {   
     const element = this.container.querySelector(query);
-}
+    if (element) {
+      element.replaceWith(value);
+    }
+  }
 
   toggleClass(element: HTMLElement, className: string, force?: boolean) { 
   
