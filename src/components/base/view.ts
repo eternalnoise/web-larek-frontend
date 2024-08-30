@@ -1,5 +1,3 @@
-import { ensureElement } from "../../utils/utils";
-
 export abstract class BaseView<T> {
   protected constructor(protected container: HTMLElement) {}
   setElement(query: string, value: HTMLElement) {   
@@ -10,33 +8,45 @@ export abstract class BaseView<T> {
   }
 
   toggleClass(element: HTMLElement, className: string, force?: boolean) { 
+     element.classList.toggle(className, force);
+    }
   
-  }
-
-  setText(element: HTMLElement, value: unknown) { 
-        
+  setText(element: HTMLElement, value: unknown) {      
+    if (element) {
+    element.textContent = String(value);
+    }
   }
 
   setDisabled(element: HTMLElement, state: boolean) { 
-    element.disabled = state;
+    if (state) {
+      element.setAttribute('disabled', 'disabled');
+    } else {
+      element.removeAttribute('disabled');
+    }
   }
 
-  setHidden(element: HTMLElement) {
-
+  setHidden(element: HTMLElement) { 
+    element.style.display = 'none';
   }   
   setVisible(element: HTMLElement) {
-    element.hidden = false;
+    element.style.display = 'block';
   }
   setImage(element: HTMLImageElement, src: string, alt?: string) {
     element.src = src;
-    element.alt = alt;
+    if (alt) {
+      element.alt = alt;
+    }
   }
 
-  render(data?: Partial): HTMLElement {
-    
+  render(data?: Partial<T>): HTMLElement {
+    Object.assign(this as object, data ?? {});
+    return this.container;
   }
 
-
-
+  clear(element: HTMLElement) {
+    while(element.firstChild) {
+      element.removeChild(element.firstChild);
+    }
+  }
 
 }

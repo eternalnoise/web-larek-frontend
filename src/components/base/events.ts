@@ -1,3 +1,5 @@
+import { IEvents } from "../../types/types";
+
 // Хорошая практика даже простые типы выносить в алиасы
 // Зато когда захотите поменять это достаточно сделать в одном месте
 type EventName = string | RegExp;
@@ -7,11 +9,6 @@ type EmitterEvent = {
     data: unknown
 };
 
-export interface IEvents {
-    on<T extends object>(event: EventName, callback: (data: T) => void): void;
-    emit<T extends object>(event: string, data?: T): void;
-    trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void;
-}
 
 /**
  * Брокер событий, классическая реализация
@@ -52,6 +49,10 @@ export class EventEmitter implements IEvents {
      */
     emit<T extends object>(eventName: string, data?: T) {
         this._events.forEach((subscribers, name) => {
+            if (name === '*') subscribers.forEach(callback => callback({
+                eventName,
+                data
+            }));
             if (name instanceof RegExp && name.test(eventName) || name === eventName) {
                 subscribers.forEach(callback => callback(data));
             }
@@ -84,4 +85,3 @@ export class EventEmitter implements IEvents {
         };
     }
 }
-

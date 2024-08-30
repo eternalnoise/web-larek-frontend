@@ -1,31 +1,37 @@
-import { IProduct } from "../../types/types";
+import { IEvents, IProduct } from "../../types/types";
 import { BaseModel } from "../base/model";
 
-export class BasketModel extends BaseModel<IProduct> {
-  items: IProduct[] = [];
-  itemsNumber: number = 0;
-  totalPrice: number = 0;
+export class BasketModel extends BaseModel<IProduct[]> {
+  items: IProduct[];
+  protected _events: IEvents;
+
+  constructor(items: IProduct[] = [], events: IEvents) {
+    super(items, events);
+    this.items = items;
+    this._events = events;
+  }
 
   addProduct(product: IProduct) {
     this.items.push(product);
-    this.itemsNumber++;
+    product.inBasket = true;
+    this._events.emit("basket_changed");
   }
   removeProduct(product: IProduct) {
-    this.items.filter((item) => item.id !== product.id);
-    this.itemsNumber--;
+    this.items = this.items.filter((item) => item.id !== product.id);
+    product.inBasket = false;
+    this._events.emit("basket_changed");
   }
 
-  getTotalPrice(): number { 
-    this.totalPrice = 0;  
-    this.items.forEach((item) => {
-      this.totalPrice += item.price;
-    });
-    return this.totalPrice;
-}
+  get totalPrice(): number { 
+    return this.items.reduce((sum, item) => sum + item.price, 0);
+  }
+
+  get itemsNumber(): number {
+    return this.items.length;
+  }
 
   clear() { 
-    this.items = [];
-    this.itemsNumber = 0;
-    this.totalPrice = 0;
+    this.items.map((item) => this.removeProduct(item));
   }
+
 }
