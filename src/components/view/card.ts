@@ -58,6 +58,8 @@ export class ProductCard extends BaseView<IProduct> {
   set category(value: string) {
     if (this.card_category) {
       this.setText(this.card_category, value);
+      this.card_category.classList.remove(...this.card_category.classList);
+      this.card_category.classList.add('card__category');
       this.card_category.classList.add(categoriesStyles[value]);
     }
   }

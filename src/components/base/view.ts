@@ -48,5 +48,4 @@ export abstract class BaseView<T> {
       element.removeChild(element.firstChild);
     }
   }
-
 }
