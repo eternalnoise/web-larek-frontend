@@ -15,6 +15,7 @@ import { ModalView } from './components/view/Modal';
 import { DeliveryDetails, IDeliveryFormData } from './components/view/DeliveryDetails';
 import { ContactsDetails, IContactsFormData } from './components/view/Contacts';
 import { Success } from './components/view/Success';
+import { IBasketView } from './types/types';
 
 const api = new Api(API_URL);
 const events = new EventEmitter();
@@ -27,6 +28,7 @@ const modalElement = ensureElement<HTMLElement>("#modal-container");
 // Темплейты
 const basketTemplate = ensureElement<HTMLTemplateElement>("#basket");
 const cardPreviewTemplate = ensureElement<HTMLTemplateElement>("#card-preview");
+const basketItemTemplate = ensureElement<HTMLTemplateElement>('#card-basket');
 const deliveryFormTemplate = ensureElement<HTMLTemplateElement>("#order");
 const contactsFormTemplate = ensureElement<HTMLTemplateElement>("#contacts");
 const successTemplate = ensureElement<HTMLTemplateElement>("#success");
@@ -54,6 +56,25 @@ api.get('/product')
   .catch((err) => {
     console.log(err);
   });
+
+
+function renderBasket() {
+  const basketItems = basketModel.items.map((item, index) => {
+    const template = cloneTemplate(basketItemTemplate);
+    const card = new ProductCard(template, () => {
+      events.emit("basket_remove", item);
+    })
+    card.basket_index = index + 1;
+    return card.render(item);
+  });
+
+  modal.render({
+    content: basket.render({
+      basketList: basketItems,
+      totalPrice: basketModel.totalPrice
+    })
+  });
+}
 
 events.on("catalog_changed", () => {
   page.catalog = catalog.render(catalogModel.items);
@@ -88,8 +109,7 @@ events.on("basket_add", (item) => {
 
 events.on("basket_remove", (item) => {
   basketModel.removeProduct(item as IProduct);
-  basket.render(basketModel);
-  
+  renderBasket();
 })
 
 events.on("basket_changed", () => {
@@ -97,9 +117,8 @@ events.on("basket_changed", () => {
 })
 
 events.on("basket_open", () => {
-  modal.render({
-    content: basket.render(basketModel)
-  });
+  modal.open();
+  renderBasket();
 })
 
 events.on("basket_close", () => {

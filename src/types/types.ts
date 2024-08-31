@@ -1,4 +1,4 @@
-export type { IProduct, IBasket, IContacts, IDeliveryDetails, ICheckoutDetails, PaymentOption, IEvents, IPage, IModal, IFormValidation};
+export type { IProduct, IBasket, IContacts, IDeliveryDetails, ICheckoutDetails, PaymentOption, IEvents, IPage, IModal, IFormValidation, IBasketView};
 interface IProduct {
   id: string;
   description: string;
@@ -44,6 +44,11 @@ interface IPage {
 interface IBasket {
   items: IProduct[];
   itemsNumber: number;  
+  totalPrice: number;
+}
+
+interface IBasketView {
+  basketList: HTMLElement[];
   totalPrice: number;
 }
 

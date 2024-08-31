@@ -1,14 +1,12 @@
-import { IBasket, IEvents } from "../../types/types";
+import { IBasket, IEvents, IBasketView } from "../../types/types";
 import { BaseView } from "../base/view";
 import { ensureElement } from "../../utils/utils";
-import { ProductCard } from "./Card";
-import { cloneTemplate } from "../../utils/utils";
 
-const basketItemTemplate = ensureElement<HTMLTemplateElement>('#card-basket');
 
-export class BasketOpenedView extends BaseView<IBasket> {
+export class BasketOpenedView extends BaseView<IBasketView> {
   container: HTMLElement;
   basketList: HTMLElement;
+  basketListEmpty: HTMLElement;
   checkoutButton: HTMLButtonElement;
   totalPrice: HTMLElement;
   protected _events: IEvents;
@@ -19,27 +17,21 @@ export class BasketOpenedView extends BaseView<IBasket> {
     this.checkoutButton = ensureElement<HTMLButtonElement>(".button", container);
     this.totalPrice = ensureElement<HTMLElement>(".basket__price", container);
     this.basketList = ensureElement<HTMLElement>(".basket__list", container);
-
     this.checkoutButton.addEventListener("click", () => {
       this._events.emit("checkout_proceed");
     });
   }
-  fillBasket(basket: IBasket) {
+  fillBasket(basketItems: HTMLElement[]) {
     this.clear(this.basketList);
-    basket.items.forEach((item, index) => {
-      const template = cloneTemplate(basketItemTemplate);
-      const card = new ProductCard(template, () => {
-        this._events.emit("basket_remove", item);
-      })
-      card.basket_index = index + 1;
-      this.basketList.appendChild(card.render(item));
+    basketItems.forEach((item) => {
+      this.basketList.appendChild(item);
     });
   }
 
-  updateBasket(basket: IBasket) {
-    this.fillBasket(basket);
-    this.setText(this.totalPrice, `${basket.totalPrice} синапсов`);
-    if (basket.totalPrice === 0) {
+  updateBasket(data: IBasketView) {
+    this.fillBasket(data.basketList);
+    this.setText(this.totalPrice, `${data.totalPrice} синапсов`);
+    if (data.totalPrice === 0) {
       this.checkoutButton.disabled = true;
     }
     else {
@@ -47,8 +39,8 @@ export class BasketOpenedView extends BaseView<IBasket> {
     }
   }
 
-  render(basket: IBasket): HTMLElement {
-    this.updateBasket(basket);
+  render(data: IBasketView): HTMLElement {
+    this.updateBasket(data);
     return this.container;
   }
 }
