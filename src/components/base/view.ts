@@ -44,8 +44,6 @@ export abstract class BaseView<T> {
   }
 
   clear(element: HTMLElement) {
-    while(element.firstChild) {
-      element.removeChild(element.firstChild);
-    }
+    element.replaceChildren();
   }
 }

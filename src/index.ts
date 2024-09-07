@@ -10,7 +10,7 @@ import { Page } from './components/view/Page';
 import { CatalogView } from './components/view/Catalog';
 import { BasketIconView, BasketOpenedView } from './components/view/Basket';
 import { cloneTemplate, ensureElement } from './utils/utils';
-import { IProduct } from './types/types';
+import { IBasket, IProduct } from './types/types';
 import { ModalView } from './components/view/Modal';
 import { DeliveryDetails, IDeliveryFormData } from './components/view/DeliveryDetails';
 import { ContactsDetails, IContactsFormData } from './components/view/Contacts';
@@ -21,63 +21,86 @@ const api = new Api(API_URL);
 const events = new EventEmitter();
 
 // Селекторы
-const catalogTemplate = ensureElement<HTMLElement>('.gallery');
-const basketIconElement = ensureElement<HTMLButtonElement>('.page');
+
+const catalogElement = ensureElement<HTMLElement>('.gallery');
 const modalElement = ensureElement<HTMLElement>("#modal-container");
+const basketIconElement = ensureElement<HTMLButtonElement>('.page');
 
 // Темплейты
+
 const basketTemplate = ensureElement<HTMLTemplateElement>("#basket");
 const cardPreviewTemplate = ensureElement<HTMLTemplateElement>("#card-preview");
+const cardTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
 const basketItemTemplate = ensureElement<HTMLTemplateElement>('#card-basket');
 const deliveryFormTemplate = ensureElement<HTMLTemplateElement>("#order");
 const contactsFormTemplate = ensureElement<HTMLTemplateElement>("#contacts");
 const successTemplate = ensureElement<HTMLTemplateElement>("#success");
 
 // Model
+
 const catalogModel = new CatalogModel([], events);
 const basketModel = new BasketModel([], events);
 const checkoutModel = new CheckoutModel({}, events);
 
 // View
+
 const basketIcon = new BasketIconView(basketIconElement, events);
 const page = new Page(document.body, events);
-const catalog = new CatalogView(catalogTemplate, events);
+const catalog = new CatalogView(catalogElement, events);
 const modal = new ModalView(modalElement, events);
 const basket = new BasketOpenedView(cloneTemplate(basketTemplate), events);
 const deliveryForm = new DeliveryDetails(cloneTemplate(deliveryFormTemplate), events);
 const contactsForm = new ContactsDetails(cloneTemplate(contactsFormTemplate), events);
 const success = new Success(cloneTemplate(successTemplate), events);
 
+// Функции рендера M -> V
+
+function getCatalogCards(data: IProduct[]): HTMLElement[] {
+  return data.map((item) => {
+    const card = new ProductCard(
+      cloneTemplate(cardTemplate), 
+      () => {events.emit("catalog_selected", item)}
+    );
+    return card.render(item);
+  })
+}
+
+function renderBasketCard(item: IProduct, index: number): HTMLElement {
+  const card = new ProductCard(
+    cloneTemplate(basketItemTemplate), 
+    () => {events.emit("basket_remove", item)}
+  );
+  card.basket_index = index + 1;
+  return card.render(item);
+}
+
+function renderBasket() {
+  const basketItems: HTMLElement[] = basketModel.items.map((item, index) => {return renderBasketCard(item, index)});
+  const basketList: IBasketView = {
+    basketList: basketItems,
+    totalPrice: basketModel.totalPrice
+  };
+  modal.render({
+    content: basket.render(basketList)
+  });
+}
+
+// Загрузка продуктов
 
 api.get('/product')
   .then((data : ApiListResponse<IProduct>) => {
-    catalogModel.setProducts(data.items)
+    catalogModel.setProducts(data.items);
+    events.emit('catalog_changed');
   })
   .catch((err) => {
     console.log(err);
   });
 
-
-function renderBasket() {
-  const basketItems = basketModel.items.map((item, index) => {
-    const template = cloneTemplate(basketItemTemplate);
-    const card = new ProductCard(template, () => {
-      events.emit("basket_remove", item);
-    })
-    card.basket_index = index + 1;
-    return card.render(item);
-  });
-
-  modal.render({
-    content: basket.render({
-      basketList: basketItems,
-      totalPrice: basketModel.totalPrice
-    })
-  });
-}
+// События брокера
 
 events.on("catalog_changed", () => {
-  page.catalog = catalog.render(catalogModel.items);
+  const catalogList: HTMLElement[] = getCatalogCards(catalogModel.items);
+  page.catalog = catalog.render(catalogList);
   page.render();
 })
 
@@ -156,7 +179,7 @@ events.on("contactsForm_changed", (formData: IContactsFormData) => {
 })
 
 events.on("contactsForm_submit", () => {
-  const req = checkoutModel.getOrderDetails();
+  const req = checkoutModel.order;
   api.post('/order', req)
     .then(() => {
       modal.render({

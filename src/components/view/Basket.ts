@@ -21,6 +21,7 @@ export class BasketOpenedView extends BaseView<IBasketView> {
       this._events.emit("checkout_proceed");
     });
   }
+  
   fillBasket(basketItems: HTMLElement[]) {
     this.clear(this.basketList);
     basketItems.forEach((item) => {

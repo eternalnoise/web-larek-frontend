@@ -37,7 +37,7 @@ export class CheckoutModel extends BaseModel<ICheckoutDetails> {
     return this.validationData;
   }
 
-  getOrderDetails(): ICheckoutDetails {
+  get order(): ICheckoutDetails {
     return {
       payment: this.payment,     
       address: this.address,
